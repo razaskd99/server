@@ -4,23 +4,27 @@ from db.connection import get_db_connection
 from .schemas import TemplateCreate, Template
 import psycopg2
 from psycopg2 import errors as psycopg_errors
-import json
+import json, random
 
 
 def create_template(template_data: TemplateCreate, tenant_id: int) :
     conn = get_db_connection()
     cursor = conn.cursor()
+    
+    numID=random.randint(100000, 99999999)
 
     query = """
     INSERT INTO templates (
+        id,
         name,
         content,
         tenant_id,
         template_category
-    ) VALUES (%s, %s, %s, %s) RETURNING *;
+    ) VALUES (%s, %s, %s, %s, %s) RETURNING *;
     """
 
     values = (
+        numID,
         template_data.name,
         template_data.content,
         tenant_id,

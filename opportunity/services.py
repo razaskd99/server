@@ -138,7 +138,8 @@ def get_all_opportunities(tenant_id: int) -> List[Opportunity]:
             FROM opportunity o
             INNER JOIN company p ON p.company_id=o.company_id
             INNER JOIN customer c ON c.customer_id=o.customer_id
-        WHERE o.tenant_id = %s;
+        WHERE o.tenant_id = %s
+        ORDER BY o.opportunity_id DESC;
         """
 
     cursor.execute(query, (tenant_id,))

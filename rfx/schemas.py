@@ -6,12 +6,12 @@ from datetime import date, datetime
 class RfxCreate(BaseModel):
     tenant_id: int
     opportunity_id: int
-    initiator_id: int
+    initiator_id: Optional[int]
     rfx_bid_assignto: Optional[int]
     rfx_title: str
-    rfx_number: str   
+    rfx_number: Optional[str]   
     under_existing_agreement: Optional[bool] 
-    status: str
+    status: Optional[str]
     previous_rfx_ref_num: Optional[str]
     revision_of_previous_rfx: Optional[bool]
     agreement_ref_num: Optional[str]
