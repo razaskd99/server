@@ -36,7 +36,7 @@ async def verify_tenant_by_domain(domain_url: str):
 
 @router.post("/tenants/", response_model=Tenant, tags=["Control Panel"], summary="Creat a Tenant",
     description="This method will Creat a Tenant" , status_code=status.HTTP_201_CREATED)
-async def add_tenant(tenant_data: TenantCreate, current_user: str = Depends(get_current_user)):
+async def add_tenant(tenant_data: TenantCreate):
     return create_tenant(tenant_data)
 
 
