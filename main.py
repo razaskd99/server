@@ -103,8 +103,10 @@ app.add_middleware(
 
 @app.get("/")
 async def check_server():
-    print(os.environ)
-    return {"message": os.environ}
+    if "VERCEL_URL" in os.environ and os.environ["VERCEL_URL"]:
+        return "Server is vercel"
+    else:
+        return "Server is not vercel"
 
 
 
