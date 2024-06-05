@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List
-from contacts.schemas import ContactsCreate, Contacts, ContactsGet
+from contacts.schemas import ContactsCreate, Contacts, ContactsGet, ContactsSingleRecord
 from contacts.services import (
     create_contacts,
     get_all_contacts,
@@ -15,7 +15,7 @@ from auth.services import get_current_user
 
 router = APIRouter()
 
-@router.post("/contacts/", response_model=Contacts, tags=["Contacts"], summary="Create a Contacts", description="This method will create a new Contacts")
+@router.post("/contacts/", response_model=ContactsSingleRecord, tags=["Contacts"], summary="Create a Contacts", description="This method will create a new Contacts")
 async def add_contacts(contact_data: ContactsCreate, current_user: str = Depends(get_current_user)):
     return create_contacts(contact_data)
 

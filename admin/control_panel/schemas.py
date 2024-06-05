@@ -27,6 +27,7 @@ class TenantCreate(BaseModel):
     email_verified: Optional[bool] = False
     tenant_status: Optional[str]
     tenant_is_active: Optional[bool] = False
+    full_domain: Optional[str]
 
 class Tenant(TenantCreate):
     tenant_id: int

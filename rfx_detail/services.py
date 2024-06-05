@@ -20,6 +20,10 @@ def create_rfx_detail(item_form_data: RfxDetailCreate) -> RfxDetail:
         skip_final_reason,
         skip_order,
         skip_order_reason,
+        skip_rfx_clarif,
+        skip_rfx_clarif_reason,
+        skip_bid_clarif,
+        skip_bid_clarif_reason,
         created_on,
         updated_on
     ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING *;
@@ -34,7 +38,11 @@ def create_rfx_detail(item_form_data: RfxDetailCreate) -> RfxDetail:
         item_form_data.skip_final,
         item_form_data.skip_final_reason,
         item_form_data.skip_order,
-        item_form_data.skip_order_reason,
+        item_form_data.skip_order_reason,        
+        item_form_data.skip_rfx_clarif,
+        item_form_data.skip_rfx_clarif_reason,
+        item_form_data.skip_bid_clarif,
+        item_form_data.skip_bid_clarif_reason,        
         item_form_data.created_on,
         item_form_data.updated_on
     )
@@ -57,9 +65,13 @@ def create_rfx_detail(item_form_data: RfxDetailCreate) -> RfxDetail:
             skip_final=new_item[6],
             skip_final_reason=new_item[7],
             skip_order=new_item[8],
-            skip_order_reason=new_item[9],
-            created_on=new_item[10],
-            updated_on=new_item[11]
+            skip_order_reason=new_item[9],            
+            skip_rfx_clarif=new_item[10],
+            skip_rfx_clarif_reason=new_item[11],
+            skip_bid_clarif=new_item[12],
+            skip_bid_clarif_reason=new_item[13], 
+            created_on=new_item[14],
+            updated_on=new_item[15]
         )
     else:
         raise HTTPException(status_code=404, detail="RFx Detail creation failed")
@@ -89,29 +101,35 @@ def get_rfx_detail(rfx_id: int) -> Optional[RfxDetail]:
             skip_final=query_all_items[6],
             skip_final_reason=query_all_items[7],
             skip_order=query_all_items[8],
-            skip_order_reason=query_all_items[9],
-            created_on=query_all_items[10],
-            updated_on=query_all_items[11]
+            skip_order_reason=query_all_items[9],            
+            skip_rfx_clarif=query_all_items[10],
+            skip_rfx_clarif_reason=query_all_items[11],
+            skip_bid_clarif=query_all_items[12],
+            skip_bid_clarif_reason=query_all_items[13],             
+            created_on=query_all_items[14],
+            updated_on=query_all_items[15]
         )
     else:
         None
 
 
-def update_skip_prelim(rfx_detail_id: int,  item_form_data: SkipPrelimUpdate) -> Optional[RfxDetail]:
+def update_skip_prelim(rfx_id: int,  item_form_data: SkipPrelimUpdate) -> Optional[RfxDetail]:
     conn = get_db_connection()
     cursor = conn.cursor()
 
     query = """
     UPDATE rfx_detail SET 
         skip_prelim = %s,
-        skip_prelim_reason = %s
-    WHERE rfx_detail_id = %s RETURNING *;
+        skip_prelim_reason = %s,
+        updated_on = %s
+    WHERE rfx_id = %s RETURNING *;
     """
 
     values = (
         item_form_data.skip_prelim,
         item_form_data.skip_prelim_reason,
-        rfx_detail_id
+        item_form_data.updated_on,
+        rfx_id
     )
 
     cursor.execute(query, values)
@@ -133,28 +151,34 @@ def update_skip_prelim(rfx_detail_id: int,  item_form_data: SkipPrelimUpdate) ->
             skip_final_reason=updated_itemm[7],
             skip_order=updated_itemm[8],
             skip_order_reason=updated_itemm[9],
-            created_on=updated_itemm[10],
-            updated_on=updated_itemm[11]
+            skip_rfx_clarif=updated_itemm[10],
+            skip_rfx_clarif_reason=updated_itemm[11],
+            skip_bid_clarif=updated_itemm[12],
+            skip_bid_clarif_reason=updated_itemm[13], 
+            created_on=updated_itemm[14],
+            updated_on=updated_itemm[15]
         )
     else:
         raise HTTPException(status_code=404, detail="RFx Detail update failed")
 
 
-def update_skip_detail(rfx_detail_id: int,  item_form_data: SkipDetailUpdate) -> Optional[RfxDetail]:
+def update_skip_detail(rfx_id: int,  item_form_data: SkipDetailUpdate) -> Optional[RfxDetail]:
     conn = get_db_connection()
     cursor = conn.cursor()
 
     query = """
     UPDATE rfx_detail SET 
         skip_detail = %s,
-        skip_detail_reason = %s
-    WHERE rfx_detail_id = %s RETURNING *;
+        skip_detail_reason = %s,
+        updated_on = %s
+    WHERE rfx_id = %s RETURNING *;
     """
 
     values = (
         item_form_data.skip_detail,
         item_form_data.skip_detail_reason,
-        rfx_detail_id
+        item_form_data.updated_on,
+        rfx_id
     )
 
     cursor.execute(query, values)
@@ -176,28 +200,34 @@ def update_skip_detail(rfx_detail_id: int,  item_form_data: SkipDetailUpdate) ->
             skip_final_reason=updated_itemm[7],
             skip_order=updated_itemm[8],
             skip_order_reason=updated_itemm[9],
-            created_on=updated_itemm[10],
-            updated_on=updated_itemm[11]
+            skip_rfx_clarif=updated_itemm[10],
+            skip_rfx_clarif_reason=updated_itemm[11],
+            skip_bid_clarif=updated_itemm[12],
+            skip_bid_clarif_reason=updated_itemm[13], 
+            created_on=updated_itemm[14],
+            updated_on=updated_itemm[15]
         )
     else:
         raise HTTPException(status_code=404, detail="RFx Detail update failed")
     
 
-def update_skip_final(rfx_detail_id: int,  item_form_data: SkipFinalUpdate) -> Optional[RfxDetail]:
+def update_skip_final(rfx_id: int,  item_form_data: SkipFinalUpdate) -> Optional[RfxDetail]:
     conn = get_db_connection()
     cursor = conn.cursor()
 
     query = """
     UPDATE rfx_detail SET 
         skip_final = %s,
-        skip_final_reason = %s
-    WHERE rfx_detail_id = %s RETURNING *;
+        skip_final_reason = %s,
+        updated_on = %s
+    WHERE rfx_id = %s RETURNING *;
     """
 
     values = (
         item_form_data.skip_final,
         item_form_data.skip_final_reason,
-        rfx_detail_id
+        item_form_data.updated_on,
+        rfx_id
     )
 
     cursor.execute(query, values)
@@ -219,28 +249,34 @@ def update_skip_final(rfx_detail_id: int,  item_form_data: SkipFinalUpdate) -> O
             skip_final_reason=updated_itemm[7],
             skip_order=updated_itemm[8],
             skip_order_reason=updated_itemm[9],
-            created_on=updated_itemm[10],
-            updated_on=updated_itemm[11]
+            skip_rfx_clarif=updated_itemm[10],
+            skip_rfx_clarif_reason=updated_itemm[11],
+            skip_bid_clarif=updated_itemm[12],
+            skip_bid_clarif_reason=updated_itemm[13], 
+            created_on=updated_itemm[14],
+            updated_on=updated_itemm[15]
         )
     else:
         raise HTTPException(status_code=404, detail="RFx Detail update failed")
 
 
-def update_skip_order(rfx_detail_id: int,  item_form_data: SkipOrderUpdate) -> Optional[RfxDetail]:
+def update_skip_order(rfx_id: int,  item_form_data: SkipOrderUpdate) -> Optional[RfxDetail]:
     conn = get_db_connection()
     cursor = conn.cursor()
 
     query = """
     UPDATE rfx_detail SET 
         skip_order = %s,
-        skip_order_reason = %s
-    WHERE rfx_detail_id = %s RETURNING *;
+        skip_order_reason = %s,
+        updated_on = %s
+    WHERE rfx_id = %s RETURNING *;
     """
 
     values = (
         item_form_data.skip_order,
         item_form_data.skip_order_reason,
-        rfx_detail_id
+        item_form_data.updated_on,
+        rfx_id
     )
 
     cursor.execute(query, values)
@@ -262,8 +298,110 @@ def update_skip_order(rfx_detail_id: int,  item_form_data: SkipOrderUpdate) -> O
             skip_final_reason=updated_itemm[7],
             skip_order=updated_itemm[8],
             skip_order_reason=updated_itemm[9],
-            created_on=updated_itemm[10],
-            updated_on=updated_itemm[11]
+            skip_rfx_clarif=updated_itemm[10],
+            skip_rfx_clarif_reason=updated_itemm[11],
+            skip_bid_clarif=updated_itemm[12],
+            skip_bid_clarif_reason=updated_itemm[13], 
+            created_on=updated_itemm[14],
+            updated_on=updated_itemm[15]
+        )
+    else:
+        raise HTTPException(status_code=404, detail="RFx Detail update failed")
+
+
+def update_skip_rfx_clarif(rfx_id: int,  item_form_data: SkipOrderUpdate) -> Optional[RfxDetail]:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    query = """
+    UPDATE rfx_detail SET 
+        skip_rfx_clarif = %s,
+        skip_rfx_clarif_reason = %s,
+        updated_on = %s
+    WHERE rfx_id = %s RETURNING *;
+    """
+
+    values = (
+        item_form_data.skip_rfx_clarif,
+        item_form_data.skip_rfx_clarif_reason,
+        item_form_data.updated_on,
+        rfx_id
+    )
+
+    cursor.execute(query, values)
+    updated_itemm = cursor.fetchone()
+
+    
+    conn.commit()
+    conn.close()
+
+    if updated_itemm:
+        return RfxDetail(
+            rfx_detail_id=updated_itemm[0],
+            rfx_id=updated_itemm[1],
+            skip_prelim=updated_itemm[2],
+            skip_prelim_reason=updated_itemm[3],
+            skip_detail=updated_itemm[4],
+            skip_detail_reason=updated_itemm[5],
+            skip_final=updated_itemm[6],
+            skip_final_reason=updated_itemm[7],
+            skip_order=updated_itemm[8],
+            skip_order_reason=updated_itemm[9],
+            skip_rfx_clarif=updated_itemm[10],
+            skip_rfx_clarif_reason=updated_itemm[11],
+            skip_bid_clarif=updated_itemm[12],
+            skip_bid_clarif_reason=updated_itemm[13], 
+            created_on=updated_itemm[14],
+            updated_on=updated_itemm[15]
+        )
+    else:
+        raise HTTPException(status_code=404, detail="RFx Detail update failed")
+
+
+def update_skip_bid_clarif(rfx_id: int,  item_form_data: SkipOrderUpdate) -> Optional[RfxDetail]:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    query = """
+    UPDATE rfx_detail SET 
+        skip_bid_clarif = %s,
+        skip_bid_clarif_reason = %s,
+        updated_on = %s
+    WHERE rfx_id = %s RETURNING *;
+    """
+
+    values = (
+        item_form_data.skip_bid_clarif,
+        item_form_data.skip_bid_clarif_reason,
+        item_form_data.updated_on,
+        rfx_id
+    )
+
+    cursor.execute(query, values)
+    updated_itemm = cursor.fetchone()
+
+    
+    conn.commit()
+    conn.close()
+
+    if updated_itemm:
+        return RfxDetail(
+            rfx_detail_id=updated_itemm[0],
+            rfx_id=updated_itemm[1],
+            skip_prelim=updated_itemm[2],
+            skip_prelim_reason=updated_itemm[3],
+            skip_detail=updated_itemm[4],
+            skip_detail_reason=updated_itemm[5],
+            skip_final=updated_itemm[6],
+            skip_final_reason=updated_itemm[7],
+            skip_order=updated_itemm[8],
+            skip_order_reason=updated_itemm[9],
+            skip_rfx_clarif=updated_itemm[10],
+            skip_rfx_clarif_reason=updated_itemm[11],
+            skip_bid_clarif=updated_itemm[12],
+            skip_bid_clarif_reason=updated_itemm[13], 
+            created_on=updated_itemm[14],
+            updated_on=updated_itemm[15]
         )
     else:
         raise HTTPException(status_code=404, detail="RFx Detail update failed")

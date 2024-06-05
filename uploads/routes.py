@@ -16,12 +16,10 @@ async def upload_files(
     docvaltKey: str = Header(..., description="DocValt Key"),
     rfxID: str = Header(..., description="Rfx ID")
 ):
-    print('pooooooooooo',rfxID)
     folder = get_upload_folder(tenantID, docvaltKey, rfxID)
     file_responses = []
     for file in files:
         file_path = save_file(file, folder)
-        print(file_path)
         file_responses.append({
             "filename": file.filename,
             "content_type": file.content_type,
@@ -49,7 +47,6 @@ async def upload_image(
     file_responses = []
     for file in files:
         file_path = save_file(file, folder)
-        print(file_path)
         file_responses.append({
             "filename": file.filename,
             "content_type": file.content_type,

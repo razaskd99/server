@@ -87,7 +87,12 @@ class Rfx(BaseModel):
     gross_profit_value: Optional[float]
     opportunity_description: Optional[str]
     opportunity_last_updated_at: Optional[datetime]
-    forcasted: Optional[bool]
+    forcasted: Optional[bool] 
+    end_user_project: Optional[str]
+    opportunity_currency: Optional[str]
+    sales_persuit_progress: Optional[str]
+    opportunity_owner: Optional[str]
+    bidding_unit: Optional[str] 
     customer_id: Optional[int]
     customer_name: Optional[str]
     customer_email: Optional[str]
@@ -188,3 +193,6 @@ class RfxUpdateBidNumber(BaseModel):
     
 class RfxUpdateBidAssignTo(BaseModel):
     rfx_bid_assignto: int 
+    
+class RfxUpdateStatus(BaseModel):
+    status: Optional[str] 

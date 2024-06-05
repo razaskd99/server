@@ -1,9 +1,9 @@
 from typing import List, Optional
 from fastapi import HTTPException
 from db.connection import get_db_connection
-from contacts.schemas import ContactsCreate, Contacts, ContactsGet
+from contacts.schemas import ContactsCreate, Contacts, ContactsGet, ContactsSingleRecord
 
-def create_contacts(item_form_data: ContactsCreate) -> Contacts:
+def create_contacts(item_form_data: ContactsCreate) -> ContactsSingleRecord:
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -15,8 +15,9 @@ def create_contacts(item_form_data: ContactsCreate) -> Contacts:
         contact_user_id,
         conatct_key,
         created_date,
-        created_at
-    ) VALUES (%s, %s, %s, %s, %s, %s) RETURNING *;
+        created_at,
+        persona_role
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING *;
     """
 
     values = (
@@ -25,29 +26,18 @@ def create_contacts(item_form_data: ContactsCreate) -> Contacts:
         item_form_data.contact_user_id,
         item_form_data.conatct_key,
         item_form_data.created_date,
-        item_form_data.created_at
+        item_form_data.created_at,
+        item_form_data.persona_role
     )
 
     cursor.execute(query, values)
-    new_item = cursor.fetchone()
-
-    query = """
-        SELECT c.*, 
-            u.user_name, u.email, u.first_name, u.middle_name, u.last_name,
-            u.user_role, u.role_level, u.user_profile_photo
-        FROM contacts c
-        INNER JOIN users u ON u.user_id=c.contact_user_id              
-        WHERE c.contact_id = %s ;
-        """
-
-    cursor.execute(query,(new_item[0], ))
     new_item = cursor.fetchone()
 
     conn.commit()
     conn.close()
 
     if new_item:
-        return Contacts(
+        return ContactsSingleRecord(
             contact_id=new_item[0],
             tenant_id=new_item[1],
             rfx_id=new_item[2],
@@ -55,14 +45,7 @@ def create_contacts(item_form_data: ContactsCreate) -> Contacts:
             conatct_key=new_item[4],
             created_date=new_item[5],
             created_at=new_item[6],
-            user_name=new_item[7],
-            email=new_item[8],
-            first_name=new_item[9],
-            middle_name=new_item[10],
-            last_name=new_item[11],
-            user_role=new_item[12],
-            role_level=new_item[13],
-            user_profile_photo=new_item[14]
+            persona_role=new_item[7]
         )
     else:
         raise HTTPException(status_code=404, detail="Contacts creation failed")
@@ -79,7 +62,7 @@ def get_all_contacts(tenant_id: int) -> List[ContactsGet]:
 			t.team_role,
 			d.title AS designation_title
             FROM contacts c
-            INNER JOIN users u ON u.user_id=c.contact_user_id
+            LEFT JOIN users u ON u.user_id=c.contact_user_id
 			LEFT JOIN team t ON t.team_id = u.team_id
 			LEFT JOIN designation d ON d.designation_id = u.designation_id              
         WHERE c.tenant_id = %s ;
@@ -99,16 +82,17 @@ def get_all_contacts(tenant_id: int) -> List[ContactsGet]:
                 conatct_key=row[4],
                 created_date=row[5],
                 created_at=row[6],
-                user_name=row[7],
-                email=row[8],
-                first_name=row[9],
-                middle_name=row[10],
-                last_name=row[11],
-                user_role=row[12],
-                role_level=row[13],
-                user_profile_photo=row[14],
-                team_role=row[15],
-                designation_title=row[16]
+                persona_role=row[7],
+                user_name=row[8],
+                email=row[9],
+                first_name=row[10],
+                middle_name=row[11],
+                last_name=row[12],
+                user_role=row[13],
+                role_level=row[14],
+                user_profile_photo=row[15],
+                team_role=row[16],
+                designation_title=row[17]
             )
             for row in query_all_items
         ]
@@ -122,13 +106,15 @@ def update_contacts(contact_id: int,  contact_data: ContactsCreate) -> Optional[
     query = """
     UPDATE contacts SET 
         contact_user_id = %s,
-        conatct_key = %s
+        conatct_key = %s,
+        persona_role = %s
     WHERE contact_id = %s RETURNING *;
     """
 
     values = (
         contact_data.contact_user_id,
         contact_data.conatct_key,
+        contact_data.persona_role,
         contact_id
     )
 
@@ -159,14 +145,15 @@ def update_contacts(contact_id: int,  contact_data: ContactsCreate) -> Optional[
             conatct_key=updated_itemm[4],
             created_date=updated_itemm[5],
             created_at=updated_itemm[6],
-            user_name=updated_itemm[7],
-            email=updated_itemm[8],
-            first_name=updated_itemm[9],
-            middle_name=updated_itemm[10],
-            last_name=updated_itemm[11],
-            user_role=updated_itemm[12],
-            role_level=updated_itemm[13],
-            user_profile_photo=updated_itemm[14]
+            persona_role=updated_itemm[7],
+            user_name=updated_itemm[8],
+            email=updated_itemm[9],
+            first_name=updated_itemm[10],
+            middle_name=updated_itemm[11],
+            last_name=updated_itemm[12],
+            user_role=updated_itemm[13],
+            role_level=updated_itemm[14],
+            user_profile_photo=updated_itemm[15]
         )
     else:
         raise HTTPException(status_code=404, detail="Contacts update failed")
@@ -199,7 +186,7 @@ def get_contacts_by_id(tenant_id: int, contact_id: int) -> List[ContactsGet]:
 			t.team_role,
 			d.title AS designation_title
             FROM contacts c
-            INNER JOIN users u ON u.user_id=c.contact_user_id
+            LEFT JOIN users u ON u.user_id=c.contact_user_id
 			LEFT JOIN team t ON t.team_id = u.team_id
 			LEFT JOIN designation d ON d.designation_id = u.designation_id  
         WHERE c.tenant_id = %s AND c.contact_id = %s ;
@@ -220,16 +207,17 @@ def get_contacts_by_id(tenant_id: int, contact_id: int) -> List[ContactsGet]:
                 conatct_key=row[4],
                 created_date=row[5],
                 created_at=row[6],
-                user_name=row[7],
-                email=row[8],
-                first_name=row[9],
-                middle_name=row[10],
-                last_name=row[11],
-                user_role=row[12],
-                role_level=row[13],
-                user_profile_photo=row[14],
-                team_role=row[15],
-                designation_title=row[16]
+                persona_role=row[7],
+                user_name=row[8],
+                email=row[9],
+                first_name=row[10],
+                middle_name=row[11],
+                last_name=row[12],
+                user_role=row[13],
+                role_level=row[14],
+                user_profile_photo=row[15],
+                team_role=row[16],
+                designation_title=row[17]
             )
             for row in get_all_items
         ]
@@ -248,7 +236,7 @@ def get_contacts_by_rfx_id(tenant_id: int, rfx_id: int) -> List[ContactsGet]:
 			t.team_role,
 			d.title AS designation_title
             FROM contacts c
-            INNER JOIN users u ON u.user_id=c.contact_user_id
+            LEFT JOIN users u ON u.user_id=c.contact_user_id
 			LEFT JOIN team t ON t.team_id = u.team_id
 			LEFT JOIN designation d ON d.designation_id = u.designation_id  
         WHERE c.tenant_id = %s AND c.rfx_id = %s ;
@@ -269,16 +257,17 @@ def get_contacts_by_rfx_id(tenant_id: int, rfx_id: int) -> List[ContactsGet]:
                 conatct_key=row[4],
                 created_date=row[5],
                 created_at=row[6],
-                user_name=row[7],
-                email=row[8],
-                first_name=row[9],
-                middle_name=row[10],
-                last_name=row[11],
-                user_role=row[12],
-                role_level=row[13],
-                user_profile_photo=row[14],
-                team_role=row[15],
-                designation_title=row[16]
+                persona_role=row[7],
+                user_name=row[8],
+                email=row[9],
+                first_name=row[10],
+                middle_name=row[11],
+                last_name=row[12],
+                user_role=row[13],
+                role_level=row[14],
+                user_profile_photo=row[15],
+                team_role=row[16],
+                designation_title=row[17]
             )
             for row in get_all_items
         ]
@@ -296,7 +285,7 @@ def get_contacts_by_rfx_id_and_key(tenant_id: int,rfx_id: int, conatct_key: str)
 			t.team_role,
 			d.title AS designation_title
             FROM contacts c
-            INNER JOIN users u ON u.user_id=c.contact_user_id
+            LEFT JOIN users u ON u.user_id=c.contact_user_id
 			LEFT JOIN team t ON t.team_id = u.team_id
 			LEFT JOIN designation d ON d.designation_id = u.designation_id 
         WHERE c.tenant_id = %s AND c.rfx_id = %s AND lower(c.conatct_key) = %s ;
@@ -317,16 +306,17 @@ def get_contacts_by_rfx_id_and_key(tenant_id: int,rfx_id: int, conatct_key: str)
                 conatct_key=row[4],
                 created_date=row[5],
                 created_at=row[6],
-                user_name=row[7],
-                email=row[8],
-                first_name=row[9],
-                middle_name=row[10],
-                last_name=row[11],
-                user_role=row[12],
-                role_level=row[13],
-                user_profile_photo=row[14],
-                team_role=row[15],
-                designation_title=row[16]
+                persona_role=row[7],
+                user_name=row[8],
+                email=row[9],
+                first_name=row[10],
+                middle_name=row[11],
+                last_name=row[12],
+                user_role=row[13],
+                role_level=row[14],
+                user_profile_photo=row[15],
+                team_role=row[16],
+                designation_title=row[17]
             )
             for row in get_all_items
         ]

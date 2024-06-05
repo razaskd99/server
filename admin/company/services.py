@@ -18,11 +18,12 @@ def create_company(company_data: CompanyCreate) -> Company:
         address, 
         industry, 
         website,
+        company_type,
         company_logo, 
         created_date, 
         updated_date 
         
-    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING *;
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING *;
     """
 
     values = (
@@ -33,6 +34,7 @@ def create_company(company_data: CompanyCreate) -> Company:
         company_data.address,
         company_data.industry,
         company_data.website,
+        company_data.company_type,
         company_data.company_logo,
         company_data.created_date,
         company_data.updated_date,
@@ -70,9 +72,10 @@ def get_companies(tenant_id: int) -> List[Company]:
             address=row[5],
             industry=row[6],
             website=row[7],
-            company_logo=row[10],
-            created_date=row[8],   
-            updated_date=row[9]   
+            company_type=row[8],
+            company_logo=row[9],
+            created_date=row[10],   
+            updated_date=row[11]   
         )
         for row in companies
     ]
@@ -97,9 +100,10 @@ def get_company_by_id(company_id: int) -> Optional[Company]:
             address=company[5],
             industry=company[6],
             website=company[7],
-            company_logo=company[10],
-            created_date=company[8],
-            updated_date=company[9],
+            company_type=company[8],
+            company_logo=company[9],
+            created_date=company[10],
+            updated_date=company[11],
              
         )
     else:
@@ -118,6 +122,7 @@ def update_company(company_id: int, company_data: CompanyCreate) -> Optional[Com
         address = %s,
         industry = %s,
         website = %s,
+        company_type = %s,
         company_logo = %s,
         created_date = %s,
         updated_date = %s
@@ -131,6 +136,7 @@ def update_company(company_id: int, company_data: CompanyCreate) -> Optional[Com
         company_data.address,
         company_data.industry,
         company_data.website,
+        company_data.company_type,
         company_data.company_logo,
         company_data.created_date,
         company_data.updated_date,
@@ -153,9 +159,10 @@ def update_company(company_id: int, company_data: CompanyCreate) -> Optional[Com
             address = updated_company[5],
             industry = updated_company[6],
             website = updated_company[7],
-            company_logo  = updated_company[10],
-            created_date = updated_company[8],
-            updated_date = updated_company[9]
+            company_type = updated_company[8],
+            company_logo  = updated_company[9],
+            created_date = updated_company[10],
+            updated_date = updated_company[11]
         )
     else:
         raise HTTPException(status_code=404, detail="Company update failed")
@@ -201,9 +208,10 @@ def get_company_by_name(company_name: str) -> Optional[Company]:
             address = company[5],
             industry = company[6],
             website = company[7],
-            company_logo  = company[10],
-            created_date = company[8],
-            updated_date = company[9]
+            company_type = company[8],
+            company_logo  = company[9],
+            created_date = company[10],
+            updated_date = company[11]
              
         )
     else:

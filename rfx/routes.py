@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Optional
 from . import services
 from .schemas import Rfx, RfxCreate, RfxGet, RfxGetSingleRec, RfxUpdateAcknowledgement
-from .schemas import RfxUpdateRfxNumber, RfxUpdateBidNumber, RfxUpdateBidAssignTo
+from .schemas import RfxUpdateRfxNumber, RfxUpdateBidNumber, RfxUpdateBidAssignTo, RfxUpdateStatus
 from auth.services import get_current_user
 
 router = APIRouter()
@@ -115,9 +115,14 @@ async def edit_bid_number(rfx_id: int, rfx_data: RfxUpdateBidNumber, current_use
     return services.update_bid_number(rfx_id, rfx_data)
 
 # Update BID Assign to by Rfx ID
-@router.put("/rfx/rfx-bid-assignto/id/{rfx_id}", response_model=Optional[bool], tags=["RFX"], summary="Update Bid Assign to by ID", description="Update an existing Bid Assign to ID by Rfx .")
+@router.put("/rfx/rfx-bid-assignto/id/{rfx_id}", response_model=Optional[bool], tags=["RFX"], summary="Update Bid Assign to by ID", description="Update an existing Bid Assign to by Rfx ID.")
 async def edit_bid_assignto(rfx_id: int, rfx_data: RfxUpdateBidAssignTo, current_user: str = Depends(get_current_user)):
     return services.update_bid_assignto(rfx_id, rfx_data)
+
+# Update Status to by Rfx ID
+@router.put("/rfx/rfx-status/id/{rfx_id}", response_model=Optional[bool], tags=["RFX"], summary="Update Status by ID", description="Update an existing Status by Rfx ID .")
+async def edit_status(rfx_id: int, rfx_data: RfxUpdateStatus, current_user: str = Depends(get_current_user)):
+    return services.update_status(rfx_id, rfx_data)
 
 # Delete an RFX by ID
 @router.delete(
@@ -129,3 +134,18 @@ async def edit_bid_assignto(rfx_id: int, rfx_data: RfxUpdateBidAssignTo, current
 )
 def delete_rfx(rfx_id: int, current_user: str = Depends(get_current_user)):
     return services.delete_rfx(rfx_id)
+
+
+# Get an RFX by ID
+@router.get(
+    "/rfx/opportunity-id/{opportunity_id}",
+    response_model=List[Rfx],
+    tags=["RFX"],
+    summary="Get an RFX by Opportunity ID",
+    description="Retrieve an RFX record by Opportunity ID."
+)
+def get_rfx_by_opportunity_id_api(opportunity_id: int, current_user: str = Depends(get_current_user)):
+    rfx = services.get_rfx_by_opportunity_id(opportunity_id)
+    if rfx is None:
+        raise HTTPException(status_code=404, detail="RFX not found")
+    return rfx

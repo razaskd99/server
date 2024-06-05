@@ -18,9 +18,9 @@ router = APIRouter()
 async def add_designation(designation_data: DesignationCreate, current_user: str = Depends(get_current_user)):
     return create_designation(designation_data)
 
-@router.get("/designations/tenant/{tenant_id}", response_model=List[Designation], tags=["Designations"], summary="Get All Designations", description="This method will return all Designations")
-async def list_designations(tenant_id: int, current_user: str = Depends(get_current_user)):
-    return get_all_designations(tenant_id)
+@router.get("/designations/tenant/{tenant_id}",  tags=["Designations"], summary="Get All Designations", description="This method will return all Designations")
+async def list_designations(tenant_id: int,offset: int = 0, limit: int=0, current_user: str = Depends(get_current_user)):
+    return get_all_designations(tenant_id,offset,limit)
 
 @router.put("/designations/id/{designation_id}", response_model=Designation, tags=["Designations"], summary="Update a Designation", description="This method will update an existing Designation")
 async def edit_designation(designation_id: int, designation_data: DesignationCreate, current_user: str = Depends(get_current_user)):

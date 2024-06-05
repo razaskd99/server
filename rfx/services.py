@@ -1,7 +1,7 @@
 from typing import List, Optional
 from datetime import date, datetime
 from .schemas import Rfx, RfxCreate, RfxGet, RfxGetSingleRec, RfxUpdateAcknowledgement 
-from .schemas import RfxUpdateRfxNumber, RfxUpdateBidNumber, RfxUpdateBidAssignTo
+from .schemas import RfxUpdateRfxNumber, RfxUpdateBidNumber, RfxUpdateBidAssignTo, RfxUpdateStatus
 from db.connection import get_db_connection
 
 # Function to create an RFX
@@ -113,7 +113,8 @@ def get_all_rfx(tenant_id: int) -> List[Rfx]:
             o.delivery_duration, r5.title AS opportunity_stage, o.status AS opportunity_status,  
             o.expected_rfx_date, o.close_date, o.competition, o.gross_profit_percent, o.gross_profit_value, 
             o.description AS opportunity_description, 
-            o.last_updated_at AS opportunity_last_updated_at, o.forcasted, 
+            o.last_updated_at AS opportunity_last_updated_at, o.forcasted,
+            o.end_user_project, o.opportunity_currency, o.sales_persuit_progress,o.opportunity_owner, o.bidding_unit, 
             c.customer_id, c.customer_name, c.email AS customer_email, c.phone AS customer_phone, 
             c.address AS customer_address, 
             p.company_id, p.company_name, p.email AS company_email, 
@@ -139,7 +140,7 @@ def get_all_rfx(tenant_id: int) -> List[Rfx]:
         WHERE r.tenant_id = %s
         ORDER BY r.rfx_id DESC
         """
-
+    rfxs = {}
     try:
         cursor.execute(query, (tenant_id,))
         rfxs = cursor.fetchall()        
@@ -163,22 +164,24 @@ def get_all_rfx(tenant_id: int) -> List[Rfx]:
             end_user_name=row[34],region=row[35],industry_code=row[36],business_unit=row[37],project_type=row[38],
             delivery_duration=row[39],opportunity_stage=row[40],opportunity_status=row[41],expected_rfx_date=row[42],
             close_date=row[43],competition=row[44],gross_profit_percent=row[45],gross_profit_value=row[46],
-            opportunity_description=row[47],opportunity_last_updated_at=row[48],forcasted=row[49],            
+            opportunity_description=row[47],opportunity_last_updated_at=row[48],forcasted=row[49], 
+            end_user_project=row[50], opportunity_currency=row[51], sales_persuit_progress=row[52],
+            opportunity_owner=row[53], bidding_unit=row[54],          
             # end opportunity
-            customer_id=row[50],customer_name=row[51],customer_email=row[52],customer_phone=row[53],
-            customer_address=row[54],
+            customer_id=row[55],customer_name=row[56],customer_email=row[57],customer_phone=row[58],
+            customer_address=row[59],
             # end customer
-            company_id=row[55],company_name=row[56],company_email=row[57],company_phone=row[58],
-            company_website=row[59],company_logo=row[60],
+            company_id=row[60],company_name=row[61],company_email=row[62],company_phone=row[63],
+            company_website=row[64],company_logo=row[65],
             # end company
-            acknowledged_by=row[61],acknowledgement_date=row[62],acknowledgement_comment=row[63],
-            acknowledged=row[64],acknowledgement_document=row[65],acknowledgement_submitted_on=row[66],
+            acknowledged_by=row[66],acknowledgement_date=row[67],acknowledgement_comment=row[68],
+            acknowledged=row[69],acknowledgement_document=row[70],acknowledgement_submitted_on=row[71],
             # end acknowledgement
-            initiator_first_name=row[67],initiator_middle_name=row[68],initiator_last_name=row[69],
-            initiator_email=row[70],initiator_role=row[71],initiator_role_level=row[72],initiator_team_id=row[73],
+            initiator_first_name=row[72],initiator_middle_name=row[73],initiator_last_name=row[74],
+            initiator_email=row[75],initiator_role=row[76],initiator_role_level=row[77],initiator_team_id=row[78],
             # end initiator
-            rfx_type=row[74] or "",bid_validity=row[75] or "",submission_content=row[76] or "",
-            submission_mode=row[77] or "", rfx_stage_title=row[78] or "",            
+            rfx_type=row[79] or "",bid_validity=row[80] or "",submission_content=row[81] or "",
+            submission_mode=row[82] or "", rfx_stage_title=row[83] or "",            
             # end rfx prerequesites
             rfx_type_id=row[25], bid_validity_id=row[26], rfx_content_submission_id=row[27],
             rfx_submission_mode_id=row[28], rfx_stage_id=row[29]    
@@ -285,7 +288,6 @@ def update_rfx(rfx_id: int, rfx_data: RfxGet) -> Optional[RfxGetSingleRec]:
     cursor.execute(query, values)
     updated_acknowledgement = cursor.fetchone()
                 
-    print(update_rfx) 
     conn.commit()
     conn.close()
     
@@ -413,6 +415,31 @@ def update_bid_assignto(rfx_id: int, rfx_data: RfxUpdateBidAssignTo) -> Optional
     else:
         return False
 
+def update_status(rfx_id: int, rfx_data: RfxUpdateStatus) -> Optional[bool]:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    query = """
+        UPDATE rfx SET
+            status = %s    
+            WHERE rfx_id = %s
+        RETURNING *;
+        """
+    values = (
+        rfx_data.status,
+        rfx_id        
+    )        
+   
+    cursor.execute(query, values)
+    updated_rfx = cursor.fetchone()
+                
+    conn.commit()
+    conn.close()
+    
+    if updated_rfx:
+        return True
+    else:
+        return False
 
 def update_rfx_acknowledgement(rfx_id: int, rfx_data: RfxUpdateAcknowledgement) -> Optional[RfxUpdateAcknowledgement]:
     conn = get_db_connection()
@@ -495,7 +522,8 @@ def get_rfx_by_id(rfx_id: int) -> Optional[Rfx]:
             o.delivery_duration, r5.title AS opportunity_stage, o.status AS opportunity_status,  
             o.expected_rfx_date, o.close_date, o.competition, o.gross_profit_percent, o.gross_profit_value, 
             o.description AS opportunity_description, 
-            o.last_updated_at AS opportunity_last_updated_at, o.forcasted, 
+            o.last_updated_at AS opportunity_last_updated_at, o.forcasted,
+            o.end_user_project, o.opportunity_currency, o.sales_persuit_progress,o.opportunity_owner, o.bidding_unit, 
             c.customer_id, c.customer_name, c.email AS customer_email, c.phone AS customer_phone, 
             c.address AS customer_address, 
             p.company_id, p.company_name, p.email AS company_email, 
@@ -542,21 +570,23 @@ def get_rfx_by_id(rfx_id: int) -> Optional[Rfx]:
             delivery_duration=rfx[39],opportunity_stage=rfx[40],opportunity_status=rfx[41],expected_rfx_date=rfx[42],
             close_date=rfx[43],competition=rfx[44],gross_profit_percent=rfx[45],gross_profit_value=rfx[46],
             opportunity_description=rfx[47],opportunity_last_updated_at=rfx[48],forcasted=rfx[49],            
+            end_user_project=rfx[50], opportunity_currency=rfx[51], sales_persuit_progress=rfx[52],
+            opportunity_owner=rfx[53], bidding_unit=rfx[54],          
             # end opportunity
-            customer_id=rfx[50],customer_name=rfx[51],customer_email=rfx[52],customer_phone=rfx[53],
-            customer_address=rfx[54],
+            customer_id=rfx[55],customer_name=rfx[56],customer_email=rfx[57],customer_phone=rfx[58],
+            customer_address=rfx[59],
             # end customer
-            company_id=rfx[55],company_name=rfx[56],company_email=rfx[57],company_phone=rfx[58],
-            company_website=rfx[59],company_logo=rfx[60],
+            company_id=rfx[60],company_name=rfx[61],company_email=rfx[62],company_phone=rfx[63],
+            company_website=rfx[64],company_logo=rfx[65],
             # end company
-            acknowledged_by=rfx[61],acknowledgement_date=rfx[62],acknowledgement_comment=rfx[63],
-            acknowledged=rfx[64],acknowledgement_document=rfx[65],acknowledgement_submitted_on=rfx[66],
+            acknowledged_by=rfx[66],acknowledgement_date=rfx[67],acknowledgement_comment=rfx[68],
+            acknowledged=rfx[69],acknowledgement_document=rfx[70],acknowledgement_submitted_on=rfx[71],
             # end acknowledgement
-            initiator_first_name=rfx[67],initiator_middle_name=rfx[68],initiator_last_name=rfx[69],
-            initiator_email=rfx[70],initiator_role=rfx[71],initiator_role_level=rfx[72],initiator_team_id=rfx[73],
+            initiator_first_name=rfx[72],initiator_middle_name=rfx[73],initiator_last_name=rfx[74],
+            initiator_email=rfx[75],initiator_role=rfx[76],initiator_role_level=rfx[77],initiator_team_id=rfx[78],
             # end initiator
-            rfx_type=rfx[74] or "",bid_validity=rfx[75] or "",submission_content=rfx[76] or "",
-            submission_mode=rfx[77] or "", rfx_stage_title=rfx[78] or "",            
+            rfx_type=rfx[79] or "",bid_validity=rfx[80] or "",submission_content=rfx[81] or "",
+            submission_mode=rfx[82] or "", rfx_stage_title=rfx[83] or "",            
             # end rfx prerequesites
             rfx_type_id=rfx[25], bid_validity_id=rfx[26], rfx_content_submission_id=rfx[27],
             rfx_submission_mode_id=rfx[28], rfx_stage_id=rfx[29]    
@@ -577,7 +607,8 @@ def get_rfx_by_initiator_id(tenant_id: int, initiator_id: int) -> List[Rfx]:
             o.delivery_duration, r5.title AS opportunity_stage, o.status AS opportunity_status,  
             o.expected_rfx_date, o.close_date, o.competition, o.gross_profit_percent, o.gross_profit_value, 
             o.description AS opportunity_description, 
-            o.last_updated_at AS opportunity_last_updated_at, o.forcasted, 
+            o.last_updated_at AS opportunity_last_updated_at, o.forcasted,
+            o.end_user_project, o.opportunity_currency, o.sales_persuit_progress,o.opportunity_owner, o.bidding_unit,  
             c.customer_id, c.customer_name, c.email AS customer_email, c.phone AS customer_phone, 
             c.address AS customer_address, 
             p.company_id, p.company_name, p.email AS company_email, 
@@ -624,22 +655,24 @@ def get_rfx_by_initiator_id(tenant_id: int, initiator_id: int) -> List[Rfx]:
             end_user_name=row[34],region=row[35],industry_code=row[36],business_unit=row[37],project_type=row[38],
             delivery_duration=row[39],opportunity_stage=row[40],opportunity_status=row[41],expected_rfx_date=row[42],
             close_date=row[43],competition=row[44],gross_profit_percent=row[45],gross_profit_value=row[46],
-            opportunity_description=row[47],opportunity_last_updated_at=row[48],forcasted=row[49],            
+            opportunity_description=row[47],opportunity_last_updated_at=row[48],forcasted=row[49],
+            end_user_project=row[50], opportunity_currency=row[51], sales_persuit_progress=row[52],
+            opportunity_owner=row[53], bidding_unit=row[54],          
             # end opportunity
-            customer_id=row[50],customer_name=row[51],customer_email=row[52],customer_phone=row[53],
-            customer_address=row[54],
+            customer_id=row[55],customer_name=row[56],customer_email=row[57],customer_phone=row[58],
+            customer_address=row[59],
             # end customer
-            company_id=row[55],company_name=row[56],company_email=row[57],company_phone=row[58],
-            company_website=row[59],company_logo=row[60],
+            company_id=row[60],company_name=row[61],company_email=row[62],company_phone=row[63],
+            company_website=row[64],company_logo=row[65],
             # end company
-            acknowledged_by=row[61],acknowledgement_date=row[62],acknowledgement_comment=row[63],
-            acknowledged=row[64],acknowledgement_document=row[65],acknowledgement_submitted_on=row[66],
+            acknowledged_by=row[66],acknowledgement_date=row[67],acknowledgement_comment=row[68],
+            acknowledged=row[69],acknowledgement_document=row[70],acknowledgement_submitted_on=row[71],
             # end acknowledgement
-            initiator_first_name=row[67],initiator_middle_name=row[68],initiator_last_name=row[69],
-            initiator_email=row[70],initiator_role=row[71],initiator_role_level=row[72],initiator_team_id=row[73],
+            initiator_first_name=row[72],initiator_middle_name=row[73],initiator_last_name=row[74],
+            initiator_email=row[75],initiator_role=row[76],initiator_role_level=row[77],initiator_team_id=row[78],
             # end initiator
-            rfx_type=row[74] or "",bid_validity=row[75] or "",submission_content=row[76] or "",
-            submission_mode=row[77] or "", rfx_stage_title=row[78] or "",            
+            rfx_type=row[79] or "",bid_validity=row[80] or "",submission_content=row[81] or "",
+            submission_mode=row[82] or "", rfx_stage_title=row[83] or "",
             # end rfx prerequesites
             rfx_type_id=row[25], bid_validity_id=row[26], rfx_content_submission_id=row[27],
             rfx_submission_mode_id=row[28], rfx_stage_id=row[29]    
@@ -661,7 +694,8 @@ def get_rfx_by_rfx_title(tenant_id: int, rfx_title: str) -> Optional[Rfx]:
             o.delivery_duration, r5.title AS opportunity_stage, o.status AS opportunity_status,  
             o.expected_rfx_date, o.close_date, o.competition, o.gross_profit_percent, o.gross_profit_value, 
             o.description AS opportunity_description, 
-            o.last_updated_at AS opportunity_last_updated_at, o.forcasted, 
+            o.last_updated_at AS opportunity_last_updated_at, o.forcasted,
+            o.end_user_project, o.opportunity_currency, o.sales_persuit_progress,o.opportunity_owner, o.bidding_unit, 
             c.customer_id, c.customer_name, c.email AS customer_email, c.phone AS customer_phone, 
             c.address AS customer_address, 
             p.company_id, p.company_name, p.email AS company_email, 
@@ -708,21 +742,23 @@ def get_rfx_by_rfx_title(tenant_id: int, rfx_title: str) -> Optional[Rfx]:
             delivery_duration=rfx[39],opportunity_stage=rfx[40],opportunity_status=rfx[41],expected_rfx_date=rfx[42],
             close_date=rfx[43],competition=rfx[44],gross_profit_percent=rfx[45],gross_profit_value=rfx[46],
             opportunity_description=rfx[47],opportunity_last_updated_at=rfx[48],forcasted=rfx[49],            
+            end_user_project=rfx[50], opportunity_currency=rfx[51], sales_persuit_progress=rfx[52],
+            opportunity_owner=rfx[53], bidding_unit=rfx[54],          
             # end opportunity
-            customer_id=rfx[50],customer_name=rfx[51],customer_email=rfx[52],customer_phone=rfx[53],
-            customer_address=rfx[54],
+            customer_id=rfx[55],customer_name=rfx[56],customer_email=rfx[57],customer_phone=rfx[58],
+            customer_address=rfx[59],
             # end customer
-            company_id=rfx[55],company_name=rfx[56],company_email=rfx[57],company_phone=rfx[58],
-            company_website=rfx[59],company_logo=rfx[60],
+            company_id=rfx[60],company_name=rfx[61],company_email=rfx[62],company_phone=rfx[63],
+            company_website=rfx[64],company_logo=rfx[65],
             # end company
-            acknowledged_by=rfx[61],acknowledgement_date=rfx[62],acknowledgement_comment=rfx[63],
-            acknowledged=rfx[64],acknowledgement_document=rfx[65],acknowledgement_submitted_on=rfx[66],
+            acknowledged_by=rfx[66],acknowledgement_date=rfx[67],acknowledgement_comment=rfx[68],
+            acknowledged=rfx[69],acknowledgement_document=rfx[70],acknowledgement_submitted_on=rfx[71],
             # end acknowledgement
-            initiator_first_name=rfx[67],initiator_middle_name=rfx[68],initiator_last_name=rfx[69],
-            initiator_email=rfx[70],initiator_role=rfx[71],initiator_role_level=rfx[72],initiator_team_id=rfx[73],
+            initiator_first_name=rfx[72],initiator_middle_name=rfx[73],initiator_last_name=rfx[74],
+            initiator_email=rfx[75],initiator_role=rfx[76],initiator_role_level=rfx[77],initiator_team_id=rfx[78],
             # end initiator
-            rfx_type=rfx[74] or "",bid_validity=rfx[75] or "",submission_content=rfx[76] or "",
-            submission_mode=rfx[77] or "", rfx_stage_title=rfx[78] or "",
+            rfx_type=rfx[79] or "",bid_validity=rfx[80] or "",submission_content=rfx[81] or "",
+            submission_mode=rfx[82] or "", rfx_stage_title=rfx[83] or "",
             # end rfx prerequesites
             rfx_type_id=rfx[25], bid_validity_id=rfx[26], rfx_content_submission_id=rfx[27],
             rfx_submission_mode_id=rfx[28], rfx_stage_id=rfx[29]    
@@ -745,6 +781,7 @@ def get_rfx_by_rfx_number(tenant_id: int, rfx_number: str) ->  List[Rfx]:
             o.expected_rfx_date, o.close_date, o.competition, o.gross_profit_percent, o.gross_profit_value, 
             o.description AS opportunity_description, 
             o.last_updated_at AS opportunity_last_updated_at, o.forcasted, 
+            o.end_user_project, o.opportunity_currency, o.sales_persuit_progress,o.opportunity_owner, o.bidding_unit, 
             c.customer_id, c.customer_name, c.email AS customer_email, c.phone AS customer_phone, 
             c.address AS customer_address, 
             p.company_id, p.company_name, p.email AS company_email, 
@@ -795,21 +832,23 @@ def get_rfx_by_rfx_number(tenant_id: int, rfx_number: str) ->  List[Rfx]:
             delivery_duration=row[39],opportunity_stage=row[40],opportunity_status=row[41],expected_rfx_date=row[42],
             close_date=row[43],competition=row[44],gross_profit_percent=row[45],gross_profit_value=row[46],
             opportunity_description=row[47],opportunity_last_updated_at=row[48],forcasted=row[49],            
+            end_user_project=row[50], opportunity_currency=row[51], sales_persuit_progress=row[52],
+            opportunity_owner=row[53], bidding_unit=row[54],          
             # end opportunity
-            customer_id=row[50],customer_name=row[51],customer_email=row[52],customer_phone=row[53],
-            customer_address=row[54],
+            customer_id=row[55],customer_name=row[56],customer_email=row[57],customer_phone=row[58],
+            customer_address=row[59],
             # end customer
-            company_id=row[55],company_name=row[56],company_email=row[57],company_phone=row[58],
-            company_website=row[59],company_logo=row[60],
+            company_id=row[60],company_name=row[61],company_email=row[62],company_phone=row[63],
+            company_website=row[64],company_logo=row[65],
             # end company
-            acknowledged_by=row[61],acknowledgement_date=row[62],acknowledgement_comment=row[63],
-            acknowledged=row[64],acknowledgement_document=row[65],acknowledgement_submitted_on=row[66],
+            acknowledged_by=row[66],acknowledgement_date=row[67],acknowledgement_comment=row[68],
+            acknowledged=row[69],acknowledgement_document=row[70],acknowledgement_submitted_on=row[71],
             # end acknowledgement
-            initiator_first_name=row[67],initiator_middle_name=row[68],initiator_last_name=row[69],
-            initiator_email=row[70],initiator_role=row[71],initiator_role_level=row[72],initiator_team_id=row[73],
+            initiator_first_name=row[72],initiator_middle_name=row[73],initiator_last_name=row[74],
+            initiator_email=row[75],initiator_role=row[76],initiator_role_level=row[77],initiator_team_id=row[78],
             # end initiator
-            rfx_type=row[74] or "",bid_validity=row[75] or "",submission_content=row[76] or "",
-            submission_mode=row[77] or "", rfx_stage_title=row[78] or "",            
+            rfx_type=row[79] or "",bid_validity=row[80] or "",submission_content=row[81] or "",
+            submission_mode=row[82] or "", rfx_stage_title=row[83] or "",
             # end rfx prerequesites
             rfx_type_id=row[25], bid_validity_id=row[26], rfx_content_submission_id=row[27],
             rfx_submission_mode_id=row[28], rfx_stage_id=row[29]    
@@ -817,4 +856,95 @@ def get_rfx_by_rfx_number(tenant_id: int, rfx_number: str) ->  List[Rfx]:
         ) 
         for row in rfxs
     ]
+
+
+
+# Function to retrieve an RFX by ID
+def get_rfx_by_opportunity_id(opportunity_id: int) -> List[Rfx]:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    query = """
+        SELECT r.*,
+            o.title AS opportunity_title, o.type AS opportunity_type, o.probability, o.total_value, 
+            o.end_user_name, o.region, o.industry_code, o.business_unit, o.project_type, 
+            o.delivery_duration, r5.title AS opportunity_stage, o.status AS opportunity_status,  
+            o.expected_rfx_date, o.close_date, o.competition, o.gross_profit_percent, o.gross_profit_value, 
+            o.description AS opportunity_description, 
+            o.last_updated_at AS opportunity_last_updated_at, o.forcasted,
+            o.end_user_project, o.opportunity_currency, o.sales_persuit_progress,o.opportunity_owner, o.bidding_unit, 
+            c.customer_id, c.customer_name, c.email AS customer_email, c.phone AS customer_phone, 
+            c.address AS customer_address, 
+            p.company_id, p.company_name, p.email AS company_email, 
+            p.phone AS company_phone, p.website AS company_website, p.company_logo,
+            a.acknowledged_by, a.acknowledgement_date, a.acknowledgement_comment, a.acknowledged, 
+            a.acknowledgement_document, a.acknowledgement_submitted_on,
+            u.first_name AS initiator_first_name, u.middle_name AS initiator_middle_name, 
+            u.last_name AS initiator_last_name,	u.email AS initiator_email, u.user_role AS initiator_role, 
+		    u.role_level AS initiator_role_level, u.team_id AS initiator_team_id,
+            r1.title AS rfx_type, r2.title AS bid_validity, r3.title AS submission_content,
+            r4.title AS submission_mode, r5.title AS rfx_stage_title
+        FROM rfx r
+        LEFT JOIN rfx_acknowledgement a ON a.rfx_id = r.rfx_id
+        LEFT JOIN opportunity o ON o.opportunity_id = r.opportunity_id
+        LEFT JOIN customer c ON c.customer_id = o.customer_id
+        LEFT JOIN company p ON p.company_id = o.company_id
+        LEFT JOIN users u ON u.user_id=r.initiator_id
+        LEFT JOIN rfx_type r1 ON r1.rfx_type_id=r.rfx_type_id
+        LEFT JOIN bid_validity r2 ON r2.bid_validity_id=r.bid_validity_id
+        LEFT JOIN rfx_content_submission r3 ON r3.rfx_content_submission_id=r.rfx_content_submission_id
+        LEFT JOIN rfx_submission_mode r4 ON r4.rfx_submission_mode_id=r.rfx_submission_mode_id
+        LEFT JOIN rfx_stage r5 ON r5.rfx_stage_id=r.rfx_stage_id
+        WHERE  r.opportunity_id = %s
+        ORDER BY r.opportunity_id DESC;
+        """
+
+    cursor.execute(query, (opportunity_id,))
+    rfxs = cursor.fetchall()
+
+    conn.close()
+
+    if rfxs:
+        return [
+            Rfx(
+            rfx_id=rfx[0],tenant_id=rfx[1],opportunity_id=rfx[2],initiator_id=rfx[3],rfx_bid_assignto=rfx[4],
+            rfx_title=rfx[5],rfx_number=rfx[6],under_existing_agreement=rfx[7],status=rfx[8],
+            previous_rfx_ref_num=rfx[9],revision_of_previous_rfx=rfx[10],agreement_ref_num=rfx[11],
+            issued_date=rfx[12],due_date=rfx[13],crm_id=rfx[14],bid_number=rfx[15],
+            request_for_bid=rfx[16],submission_instructions=rfx[17],
+            visit_worksite=rfx[18],visit_worksite_instructions=rfx[19],tech_clarification_deadline=rfx[20],
+            com_clarification_deadline=rfx[21],expected_award_date=rfx[22],enduser_id=rfx[23],enduser_type=rfx[24],
+            # end rfx
+            opportunity_title=rfx[30],opportunity_type=rfx[31],probability=rfx[32],total_value=rfx[33],
+            end_user_name=rfx[34],region=rfx[35],industry_code=rfx[36],business_unit=rfx[37],project_type=rfx[38],
+            delivery_duration=rfx[39],opportunity_stage=rfx[40],opportunity_status=rfx[41],expected_rfx_date=rfx[42],
+            close_date=rfx[43],competition=rfx[44],gross_profit_percent=rfx[45],gross_profit_value=rfx[46],
+            opportunity_description=rfx[47],opportunity_last_updated_at=rfx[48],forcasted=rfx[49],            
+            end_user_project=rfx[50], opportunity_currency=rfx[51], sales_persuit_progress=rfx[52],
+            opportunity_owner=rfx[53], bidding_unit=rfx[54],          
+            # end opportunity
+            customer_id=rfx[55],customer_name=rfx[56],customer_email=rfx[57],customer_phone=rfx[58],
+            customer_address=rfx[59],
+            # end customer
+            company_id=rfx[60],company_name=rfx[61],company_email=rfx[62],company_phone=rfx[63],
+            company_website=rfx[64],company_logo=rfx[65],
+            # end company
+            acknowledged_by=rfx[66],acknowledgement_date=rfx[67],acknowledgement_comment=rfx[68],
+            acknowledged=rfx[69],acknowledgement_document=rfx[70],acknowledgement_submitted_on=rfx[71],
+            # end acknowledgement
+            initiator_first_name=rfx[72],initiator_middle_name=rfx[73],initiator_last_name=rfx[74],
+            initiator_email=rfx[75],initiator_role=rfx[76],initiator_role_level=rfx[77],initiator_team_id=rfx[78],
+            # end initiator
+            rfx_type=rfx[79] or "",bid_validity=rfx[80] or "",submission_content=rfx[81] or "",
+            submission_mode=rfx[82] or "", rfx_stage_title=rfx[83] or "",            
+            # end rfx prerequesites
+            rfx_type_id=rfx[25], bid_validity_id=rfx[26], rfx_content_submission_id=rfx[27],
+            rfx_submission_mode_id=rfx[28], rfx_stage_id=rfx[29]    
+            # end rfx prerequesites id    
+        )
+            for rfx in rfxs
+        ]
+        
+    else:
+        return None
     

@@ -43,7 +43,6 @@ async def add_tenant(tenant_data: TenantCreate, current_user: str = Depends(get_
 @router.get("/tenants/", response_model=list[Tenant], tags=["Control Panel"], summary="Get All tenants",
     description="This method will return All tenants")
 async def list_tenants(current_user: str = Depends(get_current_user)):
-    print("user isssssssssss ", current_user)
     return get_tenants()
 
 

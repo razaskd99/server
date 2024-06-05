@@ -153,7 +153,7 @@ def get_bid_document_by_id(bid_documents_id: int) -> Optional[BidDocuments]:
     bid_document = cursor.fetchone()
 
     conn.close()
-    print(bid_document)
+
     if bid_document:
         return BidDocuments(
             bid_documents_id=bid_document[0],

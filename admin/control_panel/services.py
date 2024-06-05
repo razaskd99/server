@@ -45,7 +45,8 @@ def check_valid_tenant(domain_url: str) -> Optional[Tenant]:
             public_key=tenant[20],
             email_verified=True if tenant[21] else False,
             tenant_status=tenant[22],
-            tenant_is_active=True if tenant[23] else False
+            tenant_is_active=True if tenant[23] else False,
+            full_domain=tenant[24]
         )
     else:
         return None
@@ -146,7 +147,8 @@ def create_tenant(tenant_data: TenantCreate) -> Optional[Tenant]:
             public_key=new_tenant[20],
             email_verified=email_verified,
             tenant_status=new_tenant[22],
-            tenant_is_active=tenant_is_active
+            tenant_is_active=tenant_is_active,
+            full_domain=new_tenant[24]
         )
     else:
         raise HTTPException(status_code=404, detail="Tenant creation failed")
@@ -186,7 +188,8 @@ def get_tenants() -> List[Tenant]:
             public_key=row[20],
             email_verified=True if row[21] else False,
             tenant_status=row[22],
-            tenant_is_active=True if row[23] else False
+            tenant_is_active=True if row[23] else False,
+            full_domain=row[24]
         )
         for row in tenants
     ]
@@ -340,7 +343,8 @@ def get_tenant_by_name(tenant_name: str) -> Optional[Tenant]:
             public_key=tenant[20],
             email_verified=True if tenant[21] else False,
             tenant_status=tenant[22],
-            tenant_is_active=True if tenant[23] else False
+            tenant_is_active=True if tenant[23] else False,
+            full_domain=tenant[24]
         )
     else:
         return None
@@ -381,7 +385,8 @@ def get_tenant_by_id(tenant_id: int) -> Optional[Tenant]:
             public_key=tenant[20],
             email_verified=True if tenant[21] else False,
             tenant_status=tenant[22],
-            tenant_is_active=True if tenant[23] else False
+            tenant_is_active=True if tenant[23] else False,
+            full_domain=tenant[24]
         )
     else:
         return None
@@ -422,7 +427,8 @@ def get_tenant_by_status(tenant_status: str) -> Optional[Tenant]:
             public_key=tenant[20],
             email_verified=True if tenant[21] else False,
             tenant_status=tenant[22],
-            tenant_is_active=True if tenant[23] else False
+            tenant_is_active=True if tenant[23] else False,
+            full_domain=tenant[24]
         )
     else:
         return None

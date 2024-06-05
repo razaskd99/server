@@ -9,7 +9,11 @@ class ContactsCreate(BaseModel):
     conatct_key: Optional[str]
     created_date: Optional[date]
     created_at: Optional[datetime]
+    persona_role: Optional[str]
 
+class ContactsSingleRecord(ContactsCreate):
+    contact_id: int
+    
 class Contacts(ContactsCreate):
     contact_id: int    
     user_name: Optional[str]
@@ -28,7 +32,8 @@ class ContactsGet(BaseModel):
     contact_user_id: int
     conatct_key: Optional[str]
     created_date: Optional[date]
-    created_at: Optional[datetime]    
+    created_at: Optional[datetime]
+    persona_role: Optional[str]   
     user_name: Optional[str]
     email: Optional[str]
     first_name: Optional[str]

@@ -32,27 +32,35 @@ def create_designation(designation_data: DesignationCreate) -> Designation:
     else:
         raise HTTPException(status_code=404, detail="Designation creation failed")
 
-def get_all_designations(tenant_id: int) -> List[Designation]:
+def get_all_designations(tenant_id: int, offset:int,limit:int) :
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    query = "SELECT * FROM designation WHERE tenant_id = %s;"
-    cursor.execute(query,(tenant_id, ))
+   # Query to fetch data with offset and limit
+    query_with_offset_limit = "SELECT * FROM designation WHERE tenant_id = %s OFFSET %s LIMIT %s;"
+    cursor.execute(query_with_offset_limit, (tenant_id,offset,limit))
     designations = cursor.fetchall()
+
+    # Query to get total count without offset and limit
+    query_total_count = "SELECT COUNT(*) FROM designation WHERE tenant_id = %s;"
+    cursor.execute(query_total_count, (tenant_id,))
+    total_count = cursor.fetchone()
 
     conn.close()
 
-    return [
-        Designation(
-            designation_id=row[0],
-            tenant_id=row[1],
-            title=row[2],
-            type=row[3],
-            description=row[4]
-        )
-        for row in designations
-    ]
-
+    return {
+        "data": [
+            Designation(
+                designation_id=row[0],
+                tenant_id=row[1],
+                title=row[2],
+                type=row[3],
+                description=row[4]
+            ).dict()
+            for row in designations
+        ],
+        "total_count": total_count
+    }
 def update_designation(designation_id: int, designation_data: DesignationCreate) -> Designation:
     conn = get_db_connection()
     cursor = conn.cursor()

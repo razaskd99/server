@@ -10,6 +10,7 @@ class CompanyCreate(BaseModel):
     address: Optional[str]
     industry: Optional[str]
     website: Optional[str]
+    company_type: Optional[str]
     company_logo: Optional[str]
     created_date: Optional[datetime]
     updated_date: Optional[datetime]
